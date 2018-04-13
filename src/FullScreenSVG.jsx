@@ -13,7 +13,9 @@ class FullScreenSVG extends Component {
     polylinePoints: [],
     polylinePointsString:[],
     intervals:4,
-    polyline: true
+    polyline: true,
+    blackWhite: "black",
+    fill:false
   }
 
   componentDidMount(){
@@ -66,13 +68,19 @@ class FullScreenSVG extends Component {
   handleKeyPress = (event) => {
     let intervals  = parseInt(event.key)
     event.key === "p" && this.setState({ polyline: !this.state.polyline })
+    event.key === "f" && this.setState({ fill: !this.state.fill })
+    event.key === "b" && this.setState((prev)=> ({
+      blackWhite: prev.blackWhite === "black"
+        ?"white"
+        :"black"
+      }))
     let allow = [1,2,3,4,5,6,7,8,9]
     allow.includes(intervals) && this.setState({ intervals })
   }
 
   render (){
-    let {polyline, innerHeight, innerWidth, polylinePoints ,polylinePointsString } = this.state
-    console.log('polylinePoints', polylinePoints )
+    let { fill, blackWhite, polyline, innerHeight, innerWidth, polylinePoints ,polylinePointsString } = this.state
+    let fillColor = fill ? '#111':'none'
     return( 
       <div onClick={this.handleClick} > 
         <svg key={this.k++} viewBox={`0 0 ${innerWidth} ${innerHeight}`} >
@@ -80,9 +88,9 @@ class FullScreenSVG extends Component {
           style={{fill:"none",stroke:"black",strokeWidth:3}} />
           {polyline
             ?<polyline points={polylinePointsString}
-              style={{fill:"none",stroke:"black",strokeWidth:3}} />
+              style={{fill:fillColor, stroke:blackWhite, strokeWidth:2}} />
             :<polygon points={polylinePointsString}
-            style={{fill:"none",stroke:"black",strokeWidth:3}} />
+            style={{fill:fillColor, stroke:blackWhite, strokeWidth:2, fillRule:'evenodd'}} />
         }
         </svg>
       </div>
