@@ -5,3 +5,16 @@
 svg{
   border:1px solid green;
 }
+
+.drawSVG{
+  fill:black; 
+  stroke:white; 
+  stroke-width:2;
+  stroke-dasharray: 100;
+  animation: draw 2s linear;
+}
+@keyframes draw {
+  to{
+    stroke-dashoffset: 1000;
+  }
+}
