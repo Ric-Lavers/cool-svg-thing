@@ -19,6 +19,7 @@ class FullScreenSVG extends Component {
     blackWhite: "white",
     fill:false,
     animationName: null,
+    lazerMode: true
   }
 
   componentDidMount(){
@@ -45,7 +46,7 @@ class FullScreenSVG extends Component {
       && event.keyCode >=37 
       && event.keyCode <=40 
       ){
-      console.log("case", event.keyCode)
+      event.preventDefault()
       let { polypoint, clientX, clientY, grid } = this.state
       let newEvent = {}
       switch(event.keyCode) {
@@ -78,28 +79,35 @@ class FullScreenSVG extends Component {
     let points = this.state.polylinePoints
     let current = [clientX, clientY]
     if(points.length >5){
-    let last = [points[points.length-2], points[points.length-1]] 
-    let beforeLast = [points[points.length-4], points[points.length-3]] 
+      let last = [points[points.length-2], points[points.length-1]] 
+      let beforeLast = [points[points.length-4], points[points.length-3]] 
 
-    const findIntervals = (start, end) => {
-      let interval = (start -end)/ this.state.intervals
-      const array = new Array(this.state.intervals+1).fill(0).map( (val, i) => val = start-(i*interval) )
-      return array
-    }
+      const findIntervals = (start, end) => {
+        let interval = (start -end)/ this.state.intervals
+        const array = new Array(this.state.intervals+1).fill(0).map( (val, i) => val = start-(i*interval) )
+          return ({array, interval})
+        }
 
-    const intervalX = findIntervals(beforeLast[0], last[0])
-    const intervalY = findIntervals(beforeLast[1], last[1])
-    const intervalCurrentX = findIntervals(last[0], current[0])
-    const intervalCurrentY = findIntervals(last[1], current[1])
-    
-    // let pattern = intervalX.map( (v,i) => [intervalX[i], intervalY[i], clientX, clientY ]  )
-    let pattern = intervalX.map( (v,i) => [intervalX[i], intervalY[i], intervalCurrentX[i], intervalCurrentY[i] ]  )
-    
-    let flat = [].concat.apply([], pattern)
-    let { polylinePointsString } = this.state
-    polylinePointsString.push(flat)
-    this.setState({ polylinePointsString })
-
+      const {array:intervalX} = findIntervals(beforeLast[0], last[0])
+      const {array:intervalY} = findIntervals(beforeLast[1], last[1])
+      const {interval:intervalLenX,array:intervalCurrentX} = findIntervals(last[0], current[0])
+      const {interval:intervalLenY,array:intervalCurrentY} = findIntervals(last[1], current[1])
+      let pattern ;
+      if(this.state.lazerMode){
+        pattern = intervalX.map( (v,i) => [intervalX[i], intervalY[i], clientX, clientY ]  )
+      }else{
+        pattern = []
+        for(let i =0; i<intervalX.length-1; i++){
+          pattern.push(
+            intervalX[i], intervalY[i], 
+            intervalCurrentX[i], intervalCurrentY[i], 
+            intervalCurrentX[i]-intervalLenX, intervalCurrentY[i]-intervalLenY )
+        }
+      }
+      let flat = [].concat.apply([], pattern)
+      let { polylinePointsString } = this.state
+      polylinePointsString.push(flat)
+      this.setState({ polylinePointsString })
     }
 
     points.push(clientX, clientY)
@@ -113,7 +121,6 @@ class FullScreenSVG extends Component {
   getPathLength = () => {
     const path = document.getElementById('drawPolyline')
     const length = path.getTotalLength()
-
     
     let styleSheet = document.styleSheets[0];
     let animationName = `draw`;
@@ -141,6 +148,7 @@ class FullScreenSVG extends Component {
         :"black"
       }))
     event.key === "a" && this.getPathLength()
+    event.key === "m" && this.setState({ lazerMode: !this.state.lazerMode })
     event.key === "-" && this.setState({ grid: this.state.grid-50 })
     event.key === "=" && this.setState({ grid: this.state.grid+50 }) 
     let allow = [1,2,3,4,5,6,7,8,9]
@@ -160,7 +168,7 @@ class FullScreenSVG extends Component {
     return( 
       <div onClick={this.handleClick} > 
         <svg key={this.k++} 
-        style={{backgroundColor:'#222'}} 
+        style={{backgroundColor:'#222', width:'100%', height:'100%'}} 
         viewBox={`0 0 ${innerWidth} ${innerHeight}`} >
           <polyline points={polylinePoints}
           style={{fill:"none",stroke:blackWhite,strokeWidth:3}} />
