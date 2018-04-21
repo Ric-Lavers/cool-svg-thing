@@ -9,6 +9,7 @@ class FullScreenSVG extends Component {
   state = {
     clientX: null,
     clientY: null,
+    grid: 200,
     innerHeight:0, 
     innerWidth: 0,
     polylinePoints: [],
@@ -26,12 +27,50 @@ class FullScreenSVG extends Component {
     document.addEventListener('keypress', (event) => {
       this.handleKeyPress(event)
     })
+    document.addEventListener('keydown', (event) => {
+      this.handleArrowPress(event)
+    })
   }
   componentWillUnmount(){
     document.removeEventListener('keypress', (event) => {
       this.handleKeyPress(event)
     })
+    document.removeEventListener('keydown', (event) => {
+      this.handleArrowPress(event)
+    })
 
+  }
+  handleArrowPress = (event) => {
+    if(this.state.polylinePoints.length > 0 
+      && event.keyCode >=37 
+      && event.keyCode <=40 
+      ){
+      console.log("case", event.keyCode)
+      let { polypoint, clientX, clientY, grid } = this.state
+      let newEvent = {}
+      switch(event.keyCode) {
+        case 37://left
+          newEvent = {clientX:clientX-grid, clientY}
+          break;
+        case 38://up
+          newEvent = {clientX, clientY:clientY-grid}
+          break;
+        case 39://right
+          newEvent = {clientX:clientX+grid, clientY}
+          break;
+        case 40://down
+          newEvent = {clientX, clientY:clientY+grid}
+          break;
+        default:
+          return
+      }
+      console.log(newEvent)
+      this.handleClick(newEvent)
+      /*  {left: 37,
+        up: 38,
+        right: 39,
+        down: 40,} */
+    }
   }
 
   handleClick = (event) => {
@@ -53,8 +92,8 @@ class FullScreenSVG extends Component {
     const intervalCurrentX = findIntervals(last[0], current[0])
     const intervalCurrentY = findIntervals(last[1], current[1])
     
-    let pattern = intervalX.map( (v,i) => [intervalX[i], intervalY[i], clientX, clientY ]  )
-    // let pattern = intervalX.map( (v,i) => [intervalX[i], intervalY[i], intervalCurrentX[i], intervalCurrentY[i] ]  )
+    // let pattern = intervalX.map( (v,i) => [intervalX[i], intervalY[i], clientX, clientY ]  )
+    let pattern = intervalX.map( (v,i) => [intervalX[i], intervalY[i], intervalCurrentX[i], intervalCurrentY[i] ]  )
     
     let flat = [].concat.apply([], pattern)
     let { polylinePointsString } = this.state
@@ -66,6 +105,7 @@ class FullScreenSVG extends Component {
     points.push(clientX, clientY)
     this.setState({ clientX, clientY, polylinePoints:points })
   }
+
   stringArt = (x, m, c)=>{
     let y = m * x + c
   }
@@ -91,6 +131,7 @@ class FullScreenSVG extends Component {
   }
 
   handleKeyPress = (event) => {
+    console.log("event.key ",event.key)
     let intervals  = parseInt(event.key)
     event.key === "p" && this.setState({ polyline: !this.state.polyline })
     event.key === "f" && this.setState({ fill: !this.state.fill })
@@ -100,6 +141,8 @@ class FullScreenSVG extends Component {
         :"black"
       }))
     event.key === "a" && this.getPathLength()
+    event.key === "-" && this.setState({ grid: this.state.grid-50 })
+    event.key === "=" && this.setState({ grid: this.state.grid+50 }) 
     let allow = [1,2,3,4,5,6,7,8,9]
     allow.includes(intervals) && this.setState({ intervals })
   }
@@ -127,6 +170,19 @@ class FullScreenSVG extends Component {
             style={{fill:fillColor, stroke:blackWhite, strokeWidth:2, fillRule:'evenodd'}} />
         }
         </svg>
+        <div style={{position: 'fixed', width:50, bottom:0, right:75, color: blackWhite, textAlign:"left", fontSize:'0.6em'}} >
+          <table>
+            <tbody>
+            {Object.keys(this.state).map((key => (
+              <tr>
+                <td>{key}</td>
+                <td>{this.state[key]}</td>
+              </tr>
+            )))}
+            </tbody>  
+          </table>
+
+        </div>
       </div>
     )
   }
