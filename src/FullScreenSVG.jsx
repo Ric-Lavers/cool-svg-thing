@@ -9,17 +9,18 @@ class FullScreenSVG extends Component {
   state = {
     clientX: null,
     clientY: null,
-    grid: 200,
+    grid: 100,
+    showBox: true,
     innerHeight:0, 
     innerWidth: 0,
     polylinePoints: [],
     polylinePointsString:[],
-    intervals:4,
+    intervals:8,
     polyline: true,
     blackWhite: "white",
     fill:false,
     animationName: null,
-    lazerMode: true
+    lazerMode: 0
   }
 
   componentDidMount(){
@@ -42,12 +43,13 @@ class FullScreenSVG extends Component {
 
   }
   handleArrowPress = (event) => {
+    if( event.key === 32) event.preventDefault();
     if(this.state.polylinePoints.length > 0 
       && event.keyCode >=37 
       && event.keyCode <=40 
       ){
       event.preventDefault()
-      let { polypoint, clientX, clientY, grid } = this.state
+      let { clientX, clientY, grid } = this.state
       let newEvent = {}
       switch(event.keyCode) {
         case 37://left
@@ -93,8 +95,45 @@ class FullScreenSVG extends Component {
       const {interval:intervalLenX,array:intervalCurrentX} = findIntervals(last[0], current[0])
       const {interval:intervalLenY,array:intervalCurrentY} = findIntervals(last[1], current[1])
       let pattern ;
-      if(this.state.lazerMode){
-        pattern = intervalX.map( (v,i) => [intervalX[i], intervalY[i], clientX, clientY ]  )
+      let len = intervalCurrentY.length 
+      switch (this.state.lazerMode){
+        case 0:
+          pattern = intervalX.map( (v,i) => [intervalX[i], intervalY[i], clientX, clientY])
+          break;
+        case 1:
+          pattern = []
+          for(let i =0; i<intervalX.length-1; i++){
+            pattern.push(
+              intervalX[i], intervalY[i], 
+              intervalCurrentX[i], intervalCurrentY[i], 
+              intervalCurrentX[i]-intervalLenX, intervalCurrentY[i]-intervalLenY )
+          }
+          break;
+        case 2:
+          pattern = []
+          for(let i = 0; i<intervalX.length-1; i++){
+            pattern.push(
+              intervalX[len-1-i], intervalY[len-1-i], 
+              intervalCurrentX[i], intervalCurrentY[i],
+              intervalCurrentX[i+1], intervalCurrentY[i+1]
+            )
+          }
+          break
+        case 3:
+          pattern = intervalX.map( (v,i) => [
+            intervalX[i], intervalY[i], 
+            intervalCurrentX[len-1-i], intervalCurrentY[len-1-i] ])
+          break;
+        case 4:
+          pattern = intervalX.map( (v,i) => [ clientX, clientY])
+          break;
+        default:
+          pattern = intervalX.map( (v,i) => [ clientX, clientY])
+          this.setState({lazerMode: 0})
+          break;
+      }
+     /*  if(this.state.lazerMode){
+        pattern = intervalX.map( (v,i) => [intervalX[i], intervalY[i] ,clientX, clientY ]  )
       }else{
         pattern = []
         for(let i =0; i<intervalX.length-1; i++){
@@ -103,7 +142,7 @@ class FullScreenSVG extends Component {
             intervalCurrentX[i], intervalCurrentY[i], 
             intervalCurrentX[i]-intervalLenX, intervalCurrentY[i]-intervalLenY )
         }
-      }
+      } */
       let flat = [].concat.apply([], pattern)
       let { polylinePointsString } = this.state
       polylinePointsString.push(flat)
@@ -148,15 +187,21 @@ class FullScreenSVG extends Component {
         :"black"
       }))
     event.key === "a" && this.getPathLength()
-    event.key === "m" && this.setState({ lazerMode: !this.state.lazerMode })
+    event.key === "m" && this.setState((prev) => (
+      prev.lazerMode === 4
+        ? {lazerMode: 0}
+        : {lazerMode: prev.lazerMode+1}
+    ))
     event.key === "-" && this.setState({ grid: this.state.grid-50 })
     event.key === "=" && this.setState({ grid: this.state.grid+50 }) 
+    event.key === "g" && this.setState({ showBox: !this.state.showBox })
     let allow = [1,2,3,4,5,6,7,8,9]
     allow.includes(intervals) && this.setState({ intervals })
   }
 
   render (){
-    let { pathLength, animationName, fill, blackWhite, polyline, innerHeight, innerWidth, polylinePoints ,polylinePointsString } = this.state
+    let { pathLength, animationName, fill, blackWhite, polyline, innerHeight, innerWidth, polylinePoints ,polylinePointsString,
+    grid, showBox, clientX, clientY } = this.state
     let fillColor = fill ? '#111':'none'
     let drawPath = animationName
       ?{
@@ -177,6 +222,7 @@ class FullScreenSVG extends Component {
             :<polygon points={polylinePointsString}
             style={{fill:fillColor, stroke:blackWhite, strokeWidth:2, fillRule:'evenodd'}} />
         }
+        {clientX && showBox && <rect x={clientX-grid} y={clientY-grid} width={grid*2} height={grid*2} style={{fill:'none',stroke:'#ccc'}}/>}
         </svg>
         <div style={{position: 'fixed', width:50, bottom:0, right:75, color: blackWhite, textAlign:"left", fontSize:'0.6em'}} >
           <table>
