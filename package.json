@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "react": "^16.3.1",
-    "react-dom": "^16.3.1",
+    "babel-polyfill": "^6.26.0",
+    "onbeat": "^1.0.4",
+    "react": "^16.7.0-@alpha",
+    "react-dom": "^16.7.0-@alpha",
     "react-scripts": "1.1.4"
   },
   "scripts": {
